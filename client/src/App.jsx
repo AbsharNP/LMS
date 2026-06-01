@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { BookOpen, GraduationCap, Menu, Search, Users } from 'lucide-react';
-import { appRoutes, courses } from './router';
+import { GraduationCap, Menu, Search } from 'lucide-react';
+import Dashboard from './pages/dashboard/Dashboard';
+import Courses from './pages/courses/Courses';
+import { appRoutes } from './router';
 
 function App() {
   const location = useLocation();
@@ -137,119 +139,6 @@ function MobileLink({ route }) {
       <Icon size={17} />
       {route.label}
     </NavLink>
-  );
-}
-
-function Dashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard label="Active Students" value="308" icon={Users} tone="indigo" />
-        <MetricCard label="Live Courses" value="18" icon={BookOpen} tone="emerald" />
-        <MetricCard label="Completion Rate" value="76%" icon={GraduationCap} tone="amber" />
-      </div>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-slate-950">Course Activity</h2>
-            <p className="text-sm text-slate-500">Latest learning progress across active classes.</p>
-          </div>
-          <button className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white" type="button">
-            Add Course
-          </button>
-        </div>
-
-        <CourseTable />
-      </section>
-    </div>
-  );
-}
-
-function Courses() {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-slate-950">Courses</h2>
-          <p className="text-sm text-slate-500">Manage the kept LMS course option from the sidebar.</p>
-        </div>
-        <button className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white sm:w-auto" type="button">
-          New Course
-        </button>
-      </div>
-
-      <CourseTable />
-    </section>
-  );
-}
-
-function MetricCard({ label, value, icon: Icon, tone }) {
-  const tones = {
-    amber: 'bg-amber-50 text-amber-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    indigo: 'bg-indigo-50 text-indigo-700',
-  };
-
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className={`mb-4 grid h-11 w-11 place-items-center rounded-lg ${tones[tone]}`}>
-        <Icon size={21} />
-      </div>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-950">{value}</p>
-    </article>
-  );
-}
-
-function CourseTable() {
-  return (
-    <div className="overflow-hidden rounded-lg border border-slate-200">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Course</th>
-              <th className="px-4 py-3 font-semibold">Instructor</th>
-              <th className="px-4 py-3 font-semibold">Students</th>
-              <th className="px-4 py-3 font-semibold">Progress</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
-            {courses.map((course) => (
-              <tr key={course.title}>
-                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">
-                  {course.title}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                  {course.instructor}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                  {course.students}
-                </td>
-                <td className="min-w-40 px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 w-24 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-indigo-600"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-slate-600">{course.progress}%</span>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-4">
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                    {course.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
   );
 }
 
