@@ -24,7 +24,7 @@ export const courses = [
   },
 ];
 
-export const appRoutes = [
+export const adminRoutes = [
   {
     path: '/dashboard',
     label: 'Dashboard',
@@ -38,3 +38,16 @@ export const appRoutes = [
     page: 'courses',
   },
 ];
+
+export const authRoutes = [
+  {
+    path: '/login',
+    label: 'Login',
+  },
+  {
+    path: '/signup',
+    label: 'Signup',
+  },
+];
+
+export const appRoutes = adminRoutes;
