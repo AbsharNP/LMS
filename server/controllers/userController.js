@@ -11,6 +11,10 @@ export const getUsers = async (req, res) => {
     return res.status(500).json({
       message: 'Unable to fetch users',
       error: err.message,
+      toast: {
+        message: 'Unable to fetch users',
+        tone: 'error',
+      },
     });
   }
 };

@@ -2,6 +2,18 @@ import { GraduationCap, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 function AppSidebar({ isOpen, onClose, routes }) {
+  const sections = routes.reduce((currentSections, route) => {
+    const sectionName = route.section || 'Navigation';
+    const existingSection = currentSections.find((section) => section.name === sectionName);
+
+    if (existingSection) {
+      existingSection.routes.push(route);
+      return currentSections;
+    }
+
+    return [...currentSections, { name: sectionName, routes: [route] }];
+  }, []);
+
   return (
     <>
       <div
@@ -37,9 +49,18 @@ function AppSidebar({ isOpen, onClose, routes }) {
           </button>
         </div>
 
-        <nav className="space-y-1">
-          {routes.map((route) => (
-            <SidebarLink key={route.path} onClick={onClose} route={route} />
+        <nav className="space-y-6">
+          {sections.map((section) => (
+            <div key={section.name}>
+              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {section.name}
+              </p>
+              <div className="space-y-1">
+                {section.routes.map((route) => (
+                  <SidebarLink key={route.path} onClick={onClose} route={route} />
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       </aside>

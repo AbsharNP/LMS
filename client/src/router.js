@@ -6,24 +6,28 @@ export const adminRoutes = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     page: 'dashboard',
+    section: 'Main',
   },
   {
     path: '/courses',
     label: 'Courses',
     icon: BookOpen,
     page: 'courses',
+    section: 'Data Management',
   },
   {
     path: '/departments',
     label: 'Departments',
     icon: Building2,
     page: 'departments',
+    section: 'Data Management',
   },
   {
     path: '/users',
     label: 'Users',
     icon: Users,
     page: 'users_view',
+    section: 'Settings',
   },
 ];
 

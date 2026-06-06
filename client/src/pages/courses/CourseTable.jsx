@@ -17,6 +17,7 @@ function CourseTable({
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Course</th>
+              <th className="px-4 py-3 font-semibold">Course Code</th>
               <th className="px-4 py-3 font-semibold">Department</th>
               {hasActions && <th className="px-4 py-3 font-semibold">Actions</th>}
             </tr>
@@ -24,7 +25,7 @@ function CourseTable({
           <tbody className="divide-y divide-slate-200 bg-white">
             {isLoading && (
               <tr>
-                <td className="px-4 py-6 text-center text-slate-500" colSpan={hasActions ? 3 : 2}>
+                <td className="px-4 py-6 text-center text-slate-500" colSpan={hasActions ? 4 : 3}>
                   Loading courses...
                 </td>
               </tr>
@@ -32,7 +33,7 @@ function CourseTable({
 
             {!isLoading && errorMessage && (
               <tr>
-                <td className="px-4 py-6 text-center text-red-600" colSpan={hasActions ? 3 : 2}>
+                <td className="px-4 py-6 text-center text-red-600" colSpan={hasActions ? 4 : 3}>
                   {errorMessage}
                 </td>
               </tr>
@@ -40,7 +41,7 @@ function CourseTable({
 
             {!isLoading && !errorMessage && courses.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-slate-500" colSpan={hasActions ? 3 : 2}>
+                <td className="px-4 py-6 text-center text-slate-500" colSpan={hasActions ? 4 : 3}>
                   No courses found.
                 </td>
               </tr>
@@ -53,6 +54,9 @@ function CourseTable({
                 <tr key={courseId}>
                   <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">
                     {course.title}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                    {course.course_code || '—'}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">
                     {course.department?.name || 'Unassigned'}

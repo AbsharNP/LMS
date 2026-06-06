@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle, Plus, Save, X } from 'lucide-react';
 import api from '../../api/axios';
 import CourseTable from './CourseTable';
+import Toast from '../../components/Toast';
 
 const initialForm = {
   title: '',
   department: '',
+  course_code: '',
 };
 
 function Courses() {
@@ -20,6 +22,15 @@ function Courses() {
   const [isDeletingId, setIsDeletingId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeoutId = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -34,7 +45,9 @@ function Courses() {
       })
       .catch((error) => {
         if (isMounted) {
-          setErrorMessage(error.response?.data?.message || 'Unable to load courses');
+          const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to load courses';
+          setErrorMessage(msg);
+          setToast({ message: msg, tone: 'error' });
         }
       })
       .finally(() => {
@@ -67,6 +80,7 @@ function Courses() {
     setFormValues({
       title: course.title || '',
       department: course.department?._id || course.department || '',
+      course_code: course.course_code || '',
     });
     setEditingId(course._id || course.id);
     setIsFormOpen(true);
@@ -95,6 +109,7 @@ function Courses() {
       const payload = {
         title: formValues.title,
         department: formValues.department,
+        course_code: formValues.course_code,
       };
 
       if (editingId) {
@@ -113,7 +128,8 @@ function Courses() {
 
       resetForm();
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Unable to save course');
+      const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to save course';
+      setToast({ message: msg, tone: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -141,7 +157,8 @@ function Courses() {
       setNotice('Course deleted successfully');
       setCourseToDelete(null);
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Unable to delete course');
+      const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to delete course';
+      setToast({ message: msg, tone: 'error' });
     } finally {
       setIsDeletingId('');
     }
@@ -149,6 +166,7 @@ function Courses() {
 
   return (
     <section className="space-y-5">
+      <Toast message={toast?.message} tone={toast?.tone} />
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -244,7 +262,7 @@ function CourseFormModal({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="title">
-                Course
+                Course Title
               </label>
               <input
                 className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
@@ -257,6 +275,21 @@ function CourseFormModal({
             </div>
 
             <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="course_code">
+                Course Code
+              </label>
+              <input
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                id="course_code"
+                name="course_code"
+                placeholder="e.g. CS101"
+                type="text"
+                value={formValues.course_code}
+                onChange={onChange}
+              />
+            </div>
+
+            <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="department">
                 Department
               </label>
@@ -288,7 +321,7 @@ function CourseFormModal({
             </button>
             <button
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              disabled={!formValues.title || !formValues.department || isSaving}
+              disabled={!formValues.title || !formValues.department || !formValues.course_code || isSaving}
               type="submit"
             >
               <Save size={17} />

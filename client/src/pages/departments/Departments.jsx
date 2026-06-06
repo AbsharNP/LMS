@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import api from '../../api/axios';
+import Toast from '../../components/Toast';
 
 const initialForm = {
   name: '',
+  prefix: '',
 };
 
 function Departments() {
@@ -17,6 +19,15 @@ function Departments() {
   const [isDeletingId, setIsDeletingId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeoutId = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,7 +42,9 @@ function Departments() {
       })
       .catch((error) => {
         if (isMounted) {
-          setErrorMessage(error.response?.data?.message || 'Unable to load departments');
+          const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to load departments';
+          setErrorMessage(msg);
+          setToast({ message: msg, tone: 'error' });
         }
       })
       .finally(() => {
@@ -59,7 +72,7 @@ function Departments() {
   };
 
   const handleEdit = (department) => {
-    setFormValues({ name: department.name || '' });
+    setFormValues({ name: department.name || '', prefix: department.prefix || '' });
     setEditingId(department._id || department.id);
     setIsFormOpen(true);
     setNotice('');
@@ -93,7 +106,8 @@ function Departments() {
 
       resetForm();
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Unable to save department');
+      const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to save department';
+      setToast({ message: msg, tone: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -118,7 +132,8 @@ function Departments() {
       setDepartmentToDelete(null);
       setNotice('Department deleted successfully');
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Unable to delete department');
+      const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to delete department';
+      setToast({ message: msg, tone: 'error' });
     } finally {
       setIsDeletingId('');
     }
@@ -126,6 +141,7 @@ function Departments() {
 
   return (
     <section className="space-y-5">
+      <Toast message={toast?.message} tone={toast?.tone} />
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -163,7 +179,7 @@ function Departments() {
           editingId={editingId}
           formValues={formValues}
           isSaving={isSaving}
-          onChange={(e) => setFormValues({ name: e.target.value })}
+          onChange={(e) => setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
           onClose={resetForm}
           onSubmit={handleSubmit}
         />
@@ -196,13 +212,14 @@ function DepartmentTable({
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Department</th>
+              <th className="px-4 py-3 font-semibold">Prefix</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
             {isLoading && (
               <tr>
-                <td className="px-4 py-6 text-center text-slate-500" colSpan="2">
+                <td className="px-4 py-6 text-center text-slate-500" colSpan="3">
                   Loading departments...
                 </td>
               </tr>
@@ -210,7 +227,7 @@ function DepartmentTable({
 
             {!isLoading && errorMessage && (
               <tr>
-                <td className="px-4 py-6 text-center text-red-600" colSpan="2">
+                <td className="px-4 py-6 text-center text-red-600" colSpan="3">
                   {errorMessage}
                 </td>
               </tr>
@@ -218,7 +235,7 @@ function DepartmentTable({
 
             {!isLoading && !errorMessage && departments.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-slate-500" colSpan="2">
+                <td className="px-4 py-6 text-center text-slate-500" colSpan="3">
                   No departments found.
                 </td>
               </tr>
@@ -231,6 +248,9 @@ function DepartmentTable({
                 <tr key={departmentId}>
                   <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">
                     {department.name}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                    {department.prefix}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4">
                     <div className="flex items-center gap-2">
@@ -292,17 +312,35 @@ function DepartmentFormModal({
         </div>
 
         <form className="p-5" onSubmit={onSubmit}>
-          <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">
-            Department
-          </label>
-          <input
-            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-            id="name"
-            name="name"
-            type="text"
-            value={formValues.name}
-            onChange={onChange}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">
+                Department Name
+              </label>
+              <input
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                id="name"
+                name="name"
+                type="text"
+                value={formValues.name}
+                onChange={onChange}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="prefix">
+                Prefix
+              </label>
+              <input
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                id="prefix"
+                name="prefix"
+                placeholder="e.g. CS"
+                type="text"
+                value={formValues.prefix}
+                onChange={onChange}
+              />
+            </div>
+          </div>
 
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
@@ -315,7 +353,7 @@ function DepartmentFormModal({
             </button>
             <button
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              disabled={!formValues.name || isSaving}
+              disabled={!formValues.name || !formValues.prefix || isSaving}
               type="submit"
             >
               <Save size={17} />

@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import Toast from '../../components/Toast';
 
 function Users() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeoutId = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -19,7 +29,9 @@ function Users() {
       })
       .catch((error) => {
         if (isMounted) {
-          setErrorMessage(error.response?.data?.message || 'Unable to load users');
+          const msg = error.response?.data?.toast?.message || error.response?.data?.message || 'Unable to load users';
+          setErrorMessage(msg);
+          setToast({ message: msg, tone: 'error' });
         }
       })
       .finally(() => {
@@ -35,6 +47,7 @@ function Users() {
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <Toast message={toast?.message} tone={toast?.tone} />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-slate-950">Users</h2>

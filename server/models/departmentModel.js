@@ -4,13 +4,29 @@ const departmentSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
       trim: true,
-      unique: true,
+    },
+    prefix: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    delete_status: {
+      type: String,
+      default: '0',
+    },
+    deleted_at: {
+      type: String,
+      default: '',
+    },
+    deleted_by: {
+      type: String,
+      default: '',
     },
   },
   {
     timestamps: true,
+    versionKey: false,
   },
 );
 
