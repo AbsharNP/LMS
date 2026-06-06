@@ -9,7 +9,7 @@ This project is split into two apps:
 
 - Client: `http://127.0.0.1:5173`
 - Server: `http://localhost:3000`
-- MongoDB: `mongodb://127.0.0.1:27017/lms_db`
+- MongoDB: `mongodb://127.0.0.1:27017/lms`
 
 ## Folder Structure
 
@@ -28,7 +28,22 @@ LMS/
 |
 |-- server/
 |   |-- .env              # MongoDB URI and server port
-|   |-- router.js         # Express API routes
+|   |-- config/
+|   |   `-- db.js         # MongoDB connection helper
+|   |-- controllers/
+|   |   |-- authController.js
+|   |   |-- courseController.js
+|   |   `-- healthController.js
+|   |-- middleware/
+|   |   `-- authMiddleware.js
+|   |-- models/
+|   |   |-- courseModel.js
+|   |   `-- userModel.js
+|   |-- routes/
+|   |   |-- authRoutes.js
+|   |   |-- courseRoutes.js
+|   |   `-- index.js
+|   |-- router.js         # Backward-compatible export for routes/index.js
 |   |-- server.js         # Express app, middleware, DB connection
 |   |-- package.json
 |   `-- package-lock.json
@@ -55,12 +70,54 @@ These routes are rendered inside `client/src/App.jsx`.
 
 Server routes are API routes handled by Express.
 
-File: `server/router.js`
+Files: `server/routes/index.js` and `server/routes/courseRoutes.js`
 
 ```text
 GET /              # Basic server health response
 GET /api/test      # Backend connection test
+POST /api/signup   # Create user, hash password, return JWT
+POST /api/login    # Verify password, return JWT
 GET /api/courses   # Course list API
+POST /api/courses  # Create a course in MongoDB
+```
+
+## JWT Auth
+
+The server uses `jsonwebtoken` with `JWT_SECRET` from `server/.env`.
+
+```env
+JWT_SECRET=my_super_secret_key
+JWT_EXPIRES_IN=7d
+```
+
+Signup and login responses include:
+
+```json
+{
+  "success": true,
+  "token": "jwt-token",
+  "user": {
+    "id": "user-id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "role": "admin",
+    "token": "jwt-token"
+  }
+}
+```
+
+The React client saves the returned user in `localStorage`. `client/src/api/axios.js` reads the saved token and sends it as:
+
+```text
+Authorization: Bearer <token>
+```
+
+Use `server/middleware/authMiddleware.js` to protect backend routes:
+
+```js
+import { protect } from '../middleware/authMiddleware.js';
+
+router.get('/profile', protect, handler);
 ```
 
 ## Important Files
@@ -94,13 +151,37 @@ Sets up:
 - Express app
 - CORS
 - JSON middleware
-- MongoDB connection
+- MongoDB connection through `server/config/db.js`
 - Express router
 - Server port
 
 ### `server/router.js`
 
-Contains API route definitions.
+Keeps the old import path working by exporting `server/routes/index.js`.
+
+### `server/models/courseModel.js`
+
+Defines the Mongoose course schema.
+
+### `server/models/userModel.js`
+
+Defines the Mongoose user schema used for signup, login, roles, password hash, and saved JWT.
+
+### `server/controllers/authController.js`
+
+Contains signup and login handlers. Passwords are hashed with `bcryptjs`, and login/signup both return a JWT.
+
+### `server/middleware/authMiddleware.js`
+
+Verifies `Authorization: Bearer <token>` headers and places the decoded JWT payload on `req.user`.
+
+### `server/controllers/courseController.js`
+
+Contains course request handlers for listing and creating courses.
+
+### `server/routes/courseRoutes.js`
+
+Contains course API route definitions.
 
 ## Run The Project
 
@@ -141,3 +222,4 @@ server/router.js
 ```
 
 Later, course data can be moved from temporary arrays into MongoDB models and controllers.
+Course reads now use the MVC structure and fall back to sample courses while the database is empty.

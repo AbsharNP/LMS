@@ -1,28 +1,4 @@
-import { BookOpen, LayoutDashboard } from 'lucide-react';
-
-export const courses = [
-  {
-    title: 'React Fundamentals',
-    instructor: 'Aarav Mehta',
-    students: 124,
-    progress: 72,
-    status: 'Published',
-  },
-  {
-    title: 'Database Design',
-    instructor: 'Neha Kapoor',
-    students: 86,
-    progress: 54,
-    status: 'Review',
-  },
-  {
-    title: 'Node API Bootcamp',
-    instructor: 'Riya Sharma',
-    students: 98,
-    progress: 81,
-    status: 'Published',
-  },
-];
+import { BookOpen, Building2, LayoutDashboard, Users } from 'lucide-react';
 
 export const adminRoutes = [
   {
@@ -37,16 +13,24 @@ export const adminRoutes = [
     icon: BookOpen,
     page: 'courses',
   },
+  {
+    path: '/departments',
+    label: 'Departments',
+    icon: Building2,
+    page: 'departments',
+  },
+  {
+    path: '/users',
+    label: 'Users',
+    icon: Users,
+    page: 'users_view',
+  },
 ];
 
 export const authRoutes = [
   {
     path: '/login',
     label: 'Login',
-  },
-  {
-    path: '/signup',
-    label: 'Signup',
   },
 ];
 

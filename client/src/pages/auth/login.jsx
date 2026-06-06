@@ -1,13 +1,66 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, LoaderCircle } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
+import { useState } from 'react';
+import api from '../../api/axios';
+import Toast from '../../components/Toast';
+import { setAuthUser, setFlashMessage } from '../../utils/auth';
 
 function Login() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [toast, setToast] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (isSubmitting || isRedirecting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setToast(null);
+
+    try {
+      const response = await api.post('/api/login', { email, password });
+
+      setAuthUser(response.data.user);
+      setFlashMessage(response.data.message || 'Login successful');
+      setIsRedirecting(true);
+      window.setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 1200);
+    } catch (err) {
+      setToast({
+        message: err.response?.data?.message || 'Unable to login',
+        tone: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <AuthLayout
       title="Sign in"
       subtitle="Enter your email and password to access the LMS admin panel."
     >
-      <form className="space-y-5">
+      <Toast message={toast?.message} tone={toast?.tone} />
+
+      {isRedirecting && (
+        <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <div className="flex items-center gap-3">
+            <CheckCircle size={18} />
+            <span className="font-medium">Login successful</span>
+            <LoaderCircle className="ml-auto animate-spin" size={18} />
+          </div>
+        </div>
+      )}
+
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="email">
             Email
@@ -18,6 +71,8 @@ function Login() {
             name="email"
             placeholder="admin@example.com"
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
@@ -31,6 +86,8 @@ function Login() {
             name="password"
             placeholder="Enter your password"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
@@ -44,17 +101,14 @@ function Login() {
           </a>
         </div>
 
-        <button className="h-11 w-full rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700" type="button">
-          Sign in
+        <button
+          className="h-11 w-full rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          disabled={!email || !password || isSubmitting || isRedirecting}
+          type="submit"
+        >
+          {isRedirecting ? 'Opening dashboard...' : isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-slate-500">
-        Do not have an account?{' '}
-        <Link className="font-medium text-indigo-600 hover:text-indigo-700" to="/signup">
-          Sign up
-        </Link>
-      </p>
     </AuthLayout>
   );
 }

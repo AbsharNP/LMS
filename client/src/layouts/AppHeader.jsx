@@ -1,9 +1,25 @@
 import { LogOut, Menu, Search, Settings, UserCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { clearAuthUser } from '../utils/auth';
 
-function AppHeader({ onMenuClick, serverStatus, title }) {
+function AppHeader({ onMenuClick, onUserChange, serverStatus, title, user }) {
+  const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const displayName = user?.name || 'Admin';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
+  const handleLogout = () => {
+    clearAuthUser();
+    onUserChange(null);
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -54,17 +70,24 @@ function AppHeader({ onMenuClick, serverStatus, title }) {
             onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
             type="button"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-50 text-indigo-700">
-              <UserCircle size={19} />
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-50 text-xs font-semibold text-indigo-700">
+              {initials || <UserCircle size={19} />}
             </span>
-            <span className="hidden sm:block">Admin</span>
+            <span className="hidden max-w-32 truncate sm:block">{displayName}</span>
           </button>
 
           {isUserMenuOpen && (
             <div
-              className="absolute right-0 top-12 z-20 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
+              className="absolute right-0 top-12 z-20 w-64 rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
               role="menu"
             >
+              <div className="border-b border-slate-100 px-3 py-3">
+                <p className="truncate text-sm font-semibold text-slate-950">{displayName}</p>
+                <p className="truncate text-xs text-slate-500">{user?.email || 'No email saved'}</p>
+                <p className="mt-1 text-xs font-medium capitalize text-indigo-600">
+                  {user?.role || 'admin'}
+                </p>
+              </div>
               <button
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                 role="menuitem"
@@ -75,6 +98,7 @@ function AppHeader({ onMenuClick, serverStatus, title }) {
               </button>
               <button
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                onClick={handleLogout}
                 role="menuitem"
                 type="button"
               >
