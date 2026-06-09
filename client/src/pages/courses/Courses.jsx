@@ -10,6 +10,12 @@ const initialForm = {
   course_code: '',
 };
 
+const requiredFields = [
+  { name: 'title', label: 'Course title' },
+  { name: 'course_code', label: 'Course code' },
+  { name: 'department', label: 'Department' },
+];
+
 function Courses() {
   const [courses, setCourses] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -23,6 +29,7 @@ function Courses() {
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [toast, setToast] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     if (!toast) {
@@ -63,17 +70,31 @@ function Courses() {
 
   const resetForm = () => {
     setFormValues(initialForm);
+    setFieldErrors({});
     setEditingId('');
     setIsFormOpen(false);
   };
 
   const handleInputChange = (e) => {
     const { name, type, value } = e.target;
+    const nextValue = type === 'number' ? Number(value) : value;
 
     setFormValues((current) => ({
       ...current,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: nextValue,
     }));
+    setFieldErrors((prev) => {
+      if (!prev[name]) {
+        return prev;
+      }
+
+      const nextErrors = { ...prev };
+      if (String(nextValue).trim()) {
+        delete nextErrors[name];
+      }
+
+      return nextErrors;
+    });
   };
 
   const handleEdit = (course) => {
@@ -82,6 +103,7 @@ function Courses() {
       department: course.department?._id || course.department || '',
       course_code: course.course_code || '',
     });
+    setFieldErrors({});
     setEditingId(course._id || course.id);
     setIsFormOpen(true);
     setNotice('');
@@ -91,13 +113,32 @@ function Courses() {
     setIsFormOpen(true);
     setEditingId('');
     setFormValues(initialForm);
+    setFieldErrors({});
     setNotice('');
+  };
+
+  const validateForm = () => {
+    const errors = requiredFields.reduce((currentErrors, field) => {
+      if (!String(formValues[field.name] || '').trim()) {
+        currentErrors[field.name] = `${field.label} is required.`;
+      }
+
+      return currentErrors;
+    }, {});
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (isSaving) {
+      return;
+    }
+
+    if (!validateForm()) {
+      setToast({ message: 'Please fill all required fields.', tone: 'error' });
       return;
     }
 
@@ -203,6 +244,7 @@ function Courses() {
         <CourseFormModal
           departments={departments}
           editingId={editingId}
+          fieldErrors={fieldErrors}
           formValues={formValues}
           isSaving={isSaving}
           onChange={handleInputChange}
@@ -226,6 +268,7 @@ function Courses() {
 function CourseFormModal({
   departments,
   editingId,
+  fieldErrors,
   formValues,
   isSaving,
   onChange,
@@ -258,45 +301,76 @@ function CourseFormModal({
           </button>
         </div>
 
-        <form className="p-5" onSubmit={onSubmit}>
+        <form className="p-5" noValidate onSubmit={onSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="title">
-                Course Title
+                Course Title <span className="text-red-600">*</span>
               </label>
               <input
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                aria-describedby={fieldErrors.title ? 'title-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.title)}
+                className={`h-10 w-full rounded-md border bg-white px-3 text-sm outline-none transition focus:ring-4 ${
+                  fieldErrors.title
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100'
+                }`}
                 id="title"
                 name="title"
+                required
                 type="text"
                 value={formValues.title}
                 onChange={onChange}
               />
+              {fieldErrors.title && (
+                <p className="mt-1 text-xs text-red-600" id="title-error">
+                  {fieldErrors.title}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="course_code">
-                Course Code
+                Course Code <span className="text-red-600">*</span>
               </label>
               <input
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                aria-describedby={fieldErrors.course_code ? 'course_code-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.course_code)}
+                className={`h-10 w-full rounded-md border bg-white px-3 text-sm uppercase outline-none transition focus:ring-4 ${
+                  fieldErrors.course_code
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100'
+                }`}
                 id="course_code"
                 name="course_code"
                 placeholder="e.g. CS101"
+                required
                 type="text"
                 value={formValues.course_code}
                 onChange={onChange}
               />
+              {fieldErrors.course_code && (
+                <p className="mt-1 text-xs text-red-600" id="course_code-error">
+                  {fieldErrors.course_code}
+                </p>
+              )}
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="department">
-                Department
+                Department <span className="text-red-600">*</span>
               </label>
               <select
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                aria-describedby={fieldErrors.department ? 'department-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.department)}
+                className={`h-10 w-full rounded-md border bg-white px-3 text-sm outline-none transition focus:ring-4 ${
+                  fieldErrors.department
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100'
+                }`}
                 id="department"
                 name="department"
+                required
                 value={formValues.department}
                 onChange={onChange}
               >
@@ -307,6 +381,11 @@ function CourseFormModal({
                   </option>
                 ))}
               </select>
+              {fieldErrors.department && (
+                <p className="mt-1 text-xs text-red-600" id="department-error">
+                  {fieldErrors.department}
+                </p>
+              )}
             </div>
           </div>
 
@@ -321,7 +400,7 @@ function CourseFormModal({
             </button>
             <button
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              disabled={!formValues.title || !formValues.department || !formValues.course_code || isSaving}
+              disabled={isSaving}
               type="submit"
             >
               <Save size={17} />

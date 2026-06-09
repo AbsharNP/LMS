@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAuthUser } from '../utils/auth';
+import { getAuthUser, clearAuthUser, setFlashMessage } from '../utils/auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_APP_URL,
@@ -14,5 +14,17 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      clearAuthUser();
+      setFlashMessage('Session expired. Please log in again.');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

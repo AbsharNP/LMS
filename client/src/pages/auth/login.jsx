@@ -1,18 +1,31 @@
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, LoaderCircle } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import Toast from '../../components/Toast';
-import { setAuthUser, setFlashMessage } from '../../utils/auth';
+import { consumeFlashMessage, setAuthUser, setFlashMessage } from '../../utils/auth';
 
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState(() => {
+    const flash = consumeFlashMessage();
+    return flash ? { message: flash, tone: 'error' } : null;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setToast(null), 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import AppHeader from './AppHeader';
 import AppSidebar from './AppSidebar';
@@ -37,6 +37,10 @@ function AdminLayout() {
 
     return () => window.clearTimeout(timeoutId);
   }, [toastMessage]);
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">

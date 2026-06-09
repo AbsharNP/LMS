@@ -8,6 +8,11 @@ const initialForm = {
   prefix: '',
 };
 
+const requiredFields = [
+  { name: 'name', label: 'Department name' },
+  { name: 'prefix', label: 'Prefix' },
+];
+
 function Departments() {
   const [departments, setDepartments] = useState([]);
   const [formValues, setFormValues] = useState(initialForm);
@@ -20,6 +25,7 @@ function Departments() {
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [toast, setToast] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     if (!toast) {
@@ -60,12 +66,14 @@ function Departments() {
 
   const resetForm = () => {
     setFormValues(initialForm);
+    setFieldErrors({});
     setEditingId('');
     setIsFormOpen(false);
   };
 
   const handleAdd = () => {
     setFormValues(initialForm);
+    setFieldErrors({});
     setEditingId('');
     setIsFormOpen(true);
     setNotice('');
@@ -73,15 +81,52 @@ function Departments() {
 
   const handleEdit = (department) => {
     setFormValues({ name: department.name || '', prefix: department.prefix || '' });
+    setFieldErrors({});
     setEditingId(department._id || department.id);
     setIsFormOpen(true);
     setNotice('');
+  };
+
+  const validateForm = () => {
+    const errors = requiredFields.reduce((currentErrors, field) => {
+      if (!String(formValues[field.name] || '').trim()) {
+        currentErrors[field.name] = `${field.label} is required.`;
+      }
+
+      return currentErrors;
+    }, {});
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleFieldChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[name]) {
+        return prev;
+      }
+
+      const nextErrors = { ...prev };
+      if (String(value).trim()) {
+        delete nextErrors[name];
+      }
+
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (isSaving) {
+      return;
+    }
+
+    if (!validateForm()) {
+      setToast({ message: 'Please fill all required fields.', tone: 'error' });
       return;
     }
 
@@ -177,9 +222,10 @@ function Departments() {
       {isFormOpen && (
         <DepartmentFormModal
           editingId={editingId}
+          fieldErrors={fieldErrors}
           formValues={formValues}
           isSaving={isSaving}
-          onChange={(e) => setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
+          onChange={handleFieldChange}
           onClose={resetForm}
           onSubmit={handleSubmit}
         />
@@ -285,6 +331,7 @@ function DepartmentTable({
 
 function DepartmentFormModal({
   editingId,
+  fieldErrors,
   formValues,
   isSaving,
   onChange,
@@ -293,7 +340,7 @@ function DepartmentFormModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
-      <div aria-modal="true" className="w-full max-w-md rounded-lg bg-white shadow-xl" role="dialog">
+      <div aria-modal="true" className="w-full max-w-xl rounded-lg bg-white shadow-xl" role="dialog">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-slate-950">
@@ -311,34 +358,58 @@ function DepartmentFormModal({
           </button>
         </div>
 
-        <form className="p-5" onSubmit={onSubmit}>
+        <form className="p-5" noValidate onSubmit={onSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">
-                Department Name
+                Department Name <span className="text-red-600">*</span>
               </label>
               <input
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                aria-describedby={fieldErrors.name ? 'name-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.name)}
+                className={`h-10 w-full rounded-md border bg-white px-3 text-sm outline-none transition focus:ring-4 ${
+                  fieldErrors.name
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100'
+                }`}
                 id="name"
                 name="name"
+                required
                 type="text"
                 value={formValues.name}
                 onChange={onChange}
               />
+              {fieldErrors.name && (
+                <p className="mt-1 text-xs text-red-600" id="name-error">
+                  {fieldErrors.name}
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="prefix">
-                Prefix
+                Prefix <span className="text-red-600">*</span>
               </label>
               <input
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                aria-describedby={fieldErrors.prefix ? 'prefix-error' : undefined}
+                aria-invalid={Boolean(fieldErrors.prefix)}
+                className={`h-10 w-full rounded-md border bg-white px-3 text-sm uppercase outline-none transition focus:ring-4 ${
+                  fieldErrors.prefix
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-100'
+                }`}
                 id="prefix"
                 name="prefix"
                 placeholder="e.g. CS"
+                required
                 type="text"
                 value={formValues.prefix}
                 onChange={onChange}
               />
+              {fieldErrors.prefix && (
+                <p className="mt-1 text-xs text-red-600" id="prefix-error">
+                  {fieldErrors.prefix}
+                </p>
+              )}
             </div>
           </div>
 
@@ -353,7 +424,7 @@ function DepartmentFormModal({
             </button>
             <button
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              disabled={!formValues.name || !formValues.prefix || isSaving}
+              disabled={isSaving}
               type="submit"
             >
               <Save size={17} />

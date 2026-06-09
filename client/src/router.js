@@ -1,4 +1,4 @@
-import { BookOpen, Building2, LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, Building2, IdCardLanyard, LayoutDashboard, Users } from 'lucide-react';
 
 export const adminRoutes = [
   {
@@ -20,6 +20,13 @@ export const adminRoutes = [
     label: 'Departments',
     icon: Building2,
     page: 'departments',
+    section: 'Data Management',
+  },
+  {
+    path: '/employees',
+    label: 'Employees',
+    icon: IdCardLanyard,
+    page: 'courses',
     section: 'Data Management',
   },
   {
